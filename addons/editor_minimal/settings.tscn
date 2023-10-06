@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://svcqas5cxmy"]
 
-[node name="EditorFeatures" type="Control"]
+[node name="Editor Features" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

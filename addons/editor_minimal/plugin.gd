@@ -24,17 +24,16 @@ func _enter_tree():
 	settings = load("res://addons/editor_minimal/settings.tscn").instantiate()
 	settings_content = settings.get_node("%Content")
 	
-	
 	add_control_to_container(CONTAINER_PROJECT_SETTING_TAB_RIGHT, settings)
 	
 	# ⭐ Runbar
 	# these probably don't work in different languages but i didnt find a better way
-	create_option("main", "run project", find_by_tooltip("Play the project"))
-	create_option("main", "pause running", find_by_tooltip("Pause the running"))
-	create_option("main", "stop running", find_by_tooltip("Stop the currently"))
-	create_option("main", "play edited", find_by_tooltip("Play the edited"))
-	create_option("main", "run specific scene", find_by_tooltip("Play a custom scene"))
-	create_option("main", "movie maker", find_by_tooltip("Enable Movie Maker"))
+	create_option("runbar", "run project", find_by_tooltip("Play the project"))
+	create_option("runbar", "pause running", find_by_tooltip("Pause the running"))
+	create_option("runbar", "stop running", find_by_tooltip("Stop the currently"))
+	create_option("runbar", "play edited", find_by_tooltip("Play the edited"))
+	create_option("runbar", "run specific scene", find_by_tooltip("Play a custom scene"))
+	create_option("runbar", "movie maker", find_by_tooltip("Enable Movie Maker"))
 	
 	# ⭐ Script
 	dock_script = EditorInterface.get_script_editor()
