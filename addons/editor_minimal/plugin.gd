@@ -88,6 +88,13 @@ func _enter_tree():
 	
 	update_visible(true)
 
+func _exit_tree():
+	for property in properties:
+		property.visible = true
+	remove_control_from_container(CONTAINER_PROJECT_SETTING_TAB_RIGHT, settings)
+	settings.queue_free()
+	dock_files.name = "FileSystem"
+
 func _process(delta):
 	script_bottom.visible = error_label.text != ""
 
@@ -129,16 +136,6 @@ func update_visible(force := false):
 			config.set_value(property.category, property.name, property.button.button_pressed)
 	config.save("res://addons/editor_minimal/plugin.cfg")
 
-func _exit_tree():
-	for property in properties:
-		property.visible = true
-	remove_control_from_container(CONTAINER_PROJECT_SETTING_TAB_RIGHT, settings)
-	settings.queue_free()
-	get_editor_interface().get_file_system_dock().name = "FileSystem"
-	dock_scene.name = "Scene"
-	dock_inspector.name = "Inspector"
-	dock_node.name = "Node"
-
 func find_button_with_text(root, term: String):
 	for child in root.get_children():
 		if child is Button:
@@ -150,17 +147,6 @@ func find_button_with_text(root, term: String):
 				return match_in_child
 
 func find_by_tooltip(term: String, node = null):
-	if node == null:
-		node = get_tree().root
-	for child in node.get_children():
-		if "tooltip_text" in child and term in child.tooltip_text:
-			return child
-		
-		var match_in_child = find_by_tooltip(term, child)
-		if match_in_child:
-			return match_in_child
-
-func find_by_type(term: String, node = null):
 	if node == null:
 		node = get_tree().root
 	for child in node.get_children():
