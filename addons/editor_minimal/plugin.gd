@@ -4,28 +4,43 @@ extends EditorPlugin
 var properties := []
 
 var settings: Control
+var settings_content
 
 var config = ConfigFile.new()
 
+var dock_runbar
+var dock_files
+var dock_script
 var dock_scene
 var dock_inspector
 var dock_node
 
+var script_bottom
+var error_label: Label
+
 func _enter_tree():
-	
 	config.load("res://addons/editor_minimal/plugin.cfg")
 	
-	settings = Control.new()
-	settings.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	settings.name = "Editor Features"
-	var vbox = VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	settings.add_child(vbox)
+	settings = load("res://addons/editor_minimal/settings.tscn").instantiate()
+	settings_content = settings.get_node("%Content")
+	
 	
 	add_control_to_container(CONTAINER_PROJECT_SETTING_TAB_RIGHT, settings)
 	
-	var node_help = find_button_with_text(EditorInterface.get_script_editor(), "Search Help")
-	create_option("script", "docs", find_button_with_text(EditorInterface.get_script_editor(), "Online Docs"))
+	# ⭐ Runbar
+	# these probably don't work in different languages but i didnt find a better way
+	create_option("main", "run project", find_by_tooltip("Play the project"))
+	create_option("main", "pause running", find_by_tooltip("Pause the running"))
+	create_option("main", "stop running", find_by_tooltip("Stop the currently"))
+	create_option("main", "play edited", find_by_tooltip("Play the edited"))
+	create_option("main", "run specific scene", find_by_tooltip("Play a custom scene"))
+	create_option("main", "movie maker", find_by_tooltip("Enable Movie Maker"))
+	
+	# ⭐ Script
+	dock_script = EditorInterface.get_script_editor()
+	
+	var node_help = find_button_with_text(dock_script, "Search Help")
+	create_option("script", "docs", find_button_with_text(dock_script, "Online Docs"))
 	create_option("script", "help", node_help)
 	var script_seperator1 = node_help.get_parent().get_child(node_help.get_index() + 1)
 	create_option("script", "seperator 1", script_seperator1)
@@ -37,27 +52,48 @@ func _enter_tree():
 	var script_popout = node_help.get_parent().get_child(node_help.get_index() + 5)
 	create_option("script", "popout", script_popout)
 	
+	script_bottom = dock_script.get_child(0).get_child(1).get_child(1).get_child(0).get_child(0).get_child(0).get_child(0).get_child(1)
 	
-	create_option("file_system", "path section", EditorInterface.get_file_system_dock().get_child(0).get_child(0))
+	error_label = script_bottom.get_child(1).get_child(0)
+	
+	# ⭐ Files
+	
+	# Rename tab
+	dock_files = EditorInterface.get_file_system_dock()
+	dock_files.name = "Files"
+	
+	create_option("file_system", "path section", dock_files.get_child(0).get_child(0))
 	
 	create_option("file_system", "previous/next", [
-			EditorInterface.get_file_system_dock().get_child(0).get_child(0).get_child(0),
-			EditorInterface.get_file_system_dock().get_child(0).get_child(0).get_child(1)
+			dock_files.get_child(0).get_child(0).get_child(0),
+			dock_files.get_child(0).get_child(0).get_child(1)
 		])
 	create_option("file_system", "path", [
-			EditorInterface.get_file_system_dock().get_child(0).get_child(0).get_child(2)
+			dock_files.get_child(0).get_child(0).get_child(2)
 		])
-	EditorInterface.get_file_system_dock().name = "Files"
-	dock_scene = EditorInterface.get_file_system_dock().get_parent().get_parent().get_parent().find_child("Scene", true, false)
-	dock_node = EditorInterface.get_file_system_dock().get_parent().get_parent().get_parent().find_child("Node", true, false)
-	dock_inspector = EditorInterface.get_file_system_dock().get_parent().get_parent().get_parent().find_child("Inspector", true, false)
+	
+	# ⭐ Inspector
+	dock_inspector = get_tree().root.find_child("Inspector", true, false)
+	
+	create_option("inspector", "top section", dock_inspector.get_child(0))
+	create_option("inspector", "documentation", dock_inspector.get_child(1).get_child(1))
+	
+	# ⭐ Scene
+	dock_scene = get_tree().root.find_child("Scene", true, false)
+	
+	
+	# ⭐ Node
+	dock_node = dock_files.get_parent().get_parent().get_parent().find_child("Node", true, false)
+	
 	
 	update_visible(true)
 
+func _process(delta):
+	script_bottom.visible = error_label.text != ""
 
 func create_option(category: String, name: String, node):
 	if not node:
-		print(node, " not found")
+		print(name.capitalize(), " not found")
 		return
 	
 	var category_node = settings.find_child(category, true, false)
@@ -66,10 +102,10 @@ func create_option(category: String, name: String, node):
 		category_node.name = category
 		category_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		
-		if settings.get_child(0).get_child_count() > 0:
+		if settings_content.get_child_count() > 0:
 			var seperator = VSeparator.new()
-			settings.get_child(0).add_child(seperator)
-		settings.get_child(0).add_child(category_node)
+			settings_content.add_child(seperator)
+		settings_content.add_child(category_node)
 		
 		var label = Label.new()
 		label.text = category.capitalize()
@@ -112,6 +148,28 @@ func find_button_with_text(root, term: String):
 			var match_in_child = find_button_with_text(child, term)
 			if match_in_child:
 				return match_in_child
+
+func find_by_tooltip(term: String, node = null):
+	if node == null:
+		node = get_tree().root
+	for child in node.get_children():
+		if "tooltip_text" in child and term in child.tooltip_text:
+			return child
+		
+		var match_in_child = find_by_tooltip(term, child)
+		if match_in_child:
+			return match_in_child
+
+func find_by_type(term: String, node = null):
+	if node == null:
+		node = get_tree().root
+	for child in node.get_children():
+		if "tooltip_text" in child and term in child.tooltip_text:
+			return child
+		
+		var match_in_child = find_by_tooltip(term, child)
+		if match_in_child:
+			return match_in_child
 
 class Property:
 	var name: String
