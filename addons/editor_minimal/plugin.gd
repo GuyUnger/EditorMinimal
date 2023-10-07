@@ -96,6 +96,8 @@ func _enter_tree():
 	update_visible(true)
 
 func _exit_tree():
+	if not settings:
+		return
 	for property in properties:
 		property.visible = true
 	remove_control_from_container(CONTAINER_PROJECT_SETTING_TAB_RIGHT, settings)
