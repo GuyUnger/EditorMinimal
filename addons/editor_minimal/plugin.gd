@@ -18,7 +18,11 @@ var dock_node
 var script_bottom
 var error_label: Label
 
+var stylebox_title: StyleBoxFlat
+
 func _enter_tree():
+	for i in 10:
+		await get_tree().process_frame
 	config.load("res://addons/editor_minimal/plugin.cfg")
 	
 	settings = load("res://addons/editor_minimal/settings.tscn").instantiate()
@@ -26,7 +30,12 @@ func _enter_tree():
 	
 	add_control_to_container(CONTAINER_PROJECT_SETTING_TAB_RIGHT, settings)
 	
+	stylebox_title = StyleBoxFlat.new()
+	stylebox_title.bg_color = Color(1, 1, 1, 0.05)
+	
 	# ⭐ Runbar
+	dock_runbar = get_tree().root.get_child(0).get_child(4).get_child(0).get_child(0).get_child(4).get_child(0).get_child(0)
+	
 	# these probably don't work in different languages but i didnt find a better way
 	create_option("runbar", "run project", find_by_tooltip("Play the project"))
 	create_option("runbar", "pause running", find_by_tooltip("Pause the running"))
@@ -84,7 +93,6 @@ func _enter_tree():
 	# ⭐ Node
 	dock_node = dock_files.get_parent().get_parent().get_parent().find_child("Node", true, false)
 	
-	
 	update_visible(true)
 
 func _exit_tree():
@@ -95,7 +103,8 @@ func _exit_tree():
 	dock_files.name = "FileSystem"
 
 func _process(delta):
-	script_bottom.visible = error_label.text != ""
+	if script_bottom:
+		script_bottom.visible = error_label.text != ""
 
 func create_option(category: String, name: String, node):
 	if not node:
@@ -106,7 +115,7 @@ func create_option(category: String, name: String, node):
 	if not category_node:
 		category_node = VBoxContainer.new()
 		category_node.name = category
-		category_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		category_node.custom_minimum_size = Vector2(300.0, 10.0)
 		
 		if settings_content.get_child_count() > 0:
 			var seperator = VSeparator.new()
@@ -115,10 +124,10 @@ func create_option(category: String, name: String, node):
 		
 		var label = Label.new()
 		label.text = category.capitalize()
+		label.add_theme_stylebox_override("normal", stylebox_title)
 		category_node.add_child(label)
 	
 	var button := CheckButton.new()
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = name.capitalize()
 	button.button_pressed = config.get_value(category, name, false)
 	button.pressed.connect(option_toggled)
